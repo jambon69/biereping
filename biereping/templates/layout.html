@@ -12,16 +12,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   </head>
   <body>
-    <nav class="white" role="navigation">
+    <nav class="green" role="navigation">
       <div class="nav-wrapper container">
-    	<a id="logo-container" href="/" class="brand-logo">Logo</a>
+    	<!-- <a id="logo-container" href="/" class="brand-logo">Logo</a> -->
     	<ul class="right hide-on-med-and-down">
-    	  <li><a href="#">Navbar Link</a></li>
+    	  <li><a href="/">Home</a></li>
     	</ul>
-    	<ul id="nav-mobile" class="side-nav">
-    	  <li><a href="/">Navbar Link</a></li>
-    	</ul>
-    	<a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+	{% if not session['logged_in'] %}
+	<ul>
+	  <li><a href="/login">Login</a></li>
+	</ul>
+	{% else %}
+	<ul>
+	  <li><a href="/logout">Logout</a></li>
+	</ul>
+	<ul>
+	  <li>Bonjour {{ session['pseudo'] }}</li>
+	</ul>
+	{% endif %}
       </div>
     </nav>
     {% block body %}{% endblock %}
