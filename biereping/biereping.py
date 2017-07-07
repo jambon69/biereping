@@ -12,6 +12,17 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 
+class Event(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    event_name = db.Column(db.String(80), unique=True)
+
+    def __init__(self, event_name):
+        self.event_name = event_name
+
+    def __repr__(self):
+        return '<Event %r>' % self.event_name
+
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True)
@@ -21,24 +32,27 @@ class User(db.Model):
         self.username = username
         self.password = password
 
-
     def __repr__(self):
         return '<User %r>' % self.username
 
 
-@app.route('/create_event', methods=['GET'])
+@app.route('/create_event', methods=['GET', 'POST'])
 def create_event():
-    return render_template('create_event.html', params={'name': 'michel', 'age': 20})
+    if request.method == "GET":
+        return render_template('create_event.html')
+    args = request.form.to_dict()
+    print args
+    event = Event(args['event_name'])
+    db.session.add(event)
+    db.session.commit()
+    return render_template("index.html")
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == "POST":
         args = request.form.to_dict()
-        print args
-        # TODO: real database lookup
         user = User.query.filter_by(username=args['username']).first()
-        print user.password
         if user is None or args['password'] != user.password:
             flash('wrong username / password')
         else:
@@ -46,6 +60,17 @@ def login():
             session['pseudo'] = args['username']
         return render_template('index.html')
     return render_template('login.html')
+
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == "GET":
+        return render_template('register.html')
+    args = request.form.to_dict()
+    user = User(args["username"], args["password"])
+    db.session.add(user)
+    db.session.commit()
+    return render_template('index.html')
 
 
 @app.route("/logout")
