@@ -2,13 +2,16 @@
 {% block body %}
 <div class="container">
   <div class="section">
-
     <div class="row">
-      <form class="col s12" action="/create_event" method="POST">
+      <form class="col s12" action="/register" method="POST">
         <div class="row">
-	  <div class="input-field">
-	    <input id="event_name" type="text" class="validate" name="event_name">
-	    <label for="event_name">Event Name</label>
+	  <div class="input-field col s6">
+	    <input id="username" type="text" class="validate" name="username">
+	    <label for="username">Pseudo</label>
+	  </div>
+	  <div class="input-field col s6">
+	    <input id="password" type="password" class="validate" name="password">
+	    <label for="password">Password</label>
 	  </div>
 	</div>
 	<div class="row">
@@ -18,7 +21,6 @@
 	</div>
       </form>
     </div>
-
   </div>
 </div>
 {% endblock %}
