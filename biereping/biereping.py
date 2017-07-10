@@ -5,6 +5,7 @@ from flask import Flask, request, abort, render_template, redirect, url_for, ses
 from flask_sqlalchemy import SQLAlchemy
 from flask_pymongo import PyMongo
 from bson.objectid import ObjectId
+import googlemaps
 
 import sys
 import os
@@ -14,7 +15,7 @@ MAPS_APIKEY = open("maps_apikey").read()
 app = Flask(__name__)
 app.config['MONGO_DBNAME'] = 'bieredb'
 app.config['MONGO_URI'] = 'mongodb://localhost:27017/bieredb'
-
+gmaps = googlemaps.Client(key=MAPS_APIKEY)
 
 mongo = PyMongo(app)
 
@@ -23,7 +24,7 @@ mongo = PyMongo(app)
 def show_event(eventId):
     events = mongo.db.events
     event = events.find_one({'_id': ObjectId(eventId)})
-    return render_template('event.html', event=event)
+    return render_template('event.html', event=event, dom={'apikey': MAPS_APIKEY})
 
 
 @app.route('/events', methods=["GET"])
@@ -41,9 +42,13 @@ def create_event():
     if request.method == "GET":
         return render_template('create_event.html', dom={'apikey': MAPS_APIKEY})
     args = request.form.to_dict()
-    print args
+    # print args
     events = mongo.db.events
-    event_id = events.insert({'event_name': args['event_name'], 'event_place': args['event_place']})
+    geocode_result = gmaps.geocode(args['event_place'])
+    loc = {}
+    if len(geocode_result) > 0:
+        loc = geocode_result[0]['geometry']['location']
+    event_id = events.insert({'event_name': args['event_name'], 'event_place': args['event_place'], 'event_loc': loc})
     return render_template("index.html")
 
 

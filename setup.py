@@ -10,6 +10,7 @@ setup(
     install_requires=[
         'flask',
         'flask_sqlalchemy',
-        'flask_pymongo'
+        'flask_pymongo',
+        'googlemaps'
         ]
 )
