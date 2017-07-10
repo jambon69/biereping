@@ -3,48 +3,52 @@
 from functools import wraps
 from flask import Flask, request, abort, render_template, redirect, url_for, session, flash, g
 from flask_sqlalchemy import SQLAlchemy
+from flask_pymongo import PyMongo
+from bson.objectid import ObjectId
+import googlemaps
+
 import sys
 import os
 
+MAPS_APIKEY = open("maps_apikey").read()
+
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///biereping.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+app.config['MONGO_DBNAME'] = 'bieredb'
+app.config['MONGO_URI'] = 'mongodb://localhost:27017/bieredb'
+gmaps = googlemaps.Client(key=MAPS_APIKEY)
+
+mongo = PyMongo(app)
 
 
-class Event(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    event_name = db.Column(db.String(80), unique=True)
-
-    def __init__(self, event_name):
-        self.event_name = event_name
-
-    def __repr__(self):
-        return '<Event %r>' % self.event_name
+@app.route('/event/<eventId>', methods=["GET"])
+def show_event(eventId):
+    events = mongo.db.events
+    event = events.find_one({'_id': ObjectId(eventId)})
+    return render_template('event.html', event=event, dom={'apikey': MAPS_APIKEY})
 
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True)
-    password = db.Column(db.String(120), unique=True)
-
-    def __init__(self, username, password):
-        self.username = username
-        self.password = password
-
-    def __repr__(self):
-        return '<User %r>' % self.username
-
+@app.route('/events', methods=["GET"])
+def show_events():
+    events = mongo.db.events
+    htmlEvent = []
+    for event in events.find():
+        print event
+        htmlEvent.append(event)
+    return render_template('events.html', events=htmlEvent)
+        
 
 @app.route('/create_event', methods=['GET', 'POST'])
 def create_event():
     if request.method == "GET":
-        return render_template('create_event.html')
+        return render_template('create_event.html', dom={'apikey': MAPS_APIKEY})
     args = request.form.to_dict()
-    print args
-    event = Event(args['event_name'])
-    db.session.add(event)
-    db.session.commit()
+    # print args
+    events = mongo.db.events
+    geocode_result = gmaps.geocode(args['event_place'])
+    loc = {}
+    if len(geocode_result) > 0:
+        loc = geocode_result[0]['geometry']['location']
+    event_id = events.insert({'event_name': args['event_name'], 'event_place': args['event_place'], 'event_loc': loc})
     return render_template("index.html")
 
 
@@ -52,8 +56,10 @@ def create_event():
 def login():
     if request.method == "POST":
         args = request.form.to_dict()
-        user = User.query.filter_by(username=args['username']).first()
-        if user is None or args['password'] != user.password:
+        users = mongo.db.users
+        user = users.find_one({'username': args['username'], 'password': args['password']})
+        print user
+        if user is None:
             flash('wrong username / password')
         else:
             session['logged_in'] = True
@@ -67,9 +73,8 @@ def register():
     if request.method == "GET":
         return render_template('register.html')
     args = request.form.to_dict()
-    user = User(args["username"], args["password"])
-    db.session.add(user)
-    db.session.commit()
+    users = mongo.db.users
+    user_id = users.insert({'username': args['username'], 'password': args['password']})
     return render_template('index.html')
 
 

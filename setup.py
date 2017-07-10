@@ -9,6 +9,8 @@ setup(
     packages=['biereping'],
     install_requires=[
         'flask',
-        'flask_sqlalchemy'
+        'flask_sqlalchemy',
+        'flask_pymongo',
+        'googlemaps'
         ]
 )
