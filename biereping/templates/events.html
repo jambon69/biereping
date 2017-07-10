@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block body %}
+  <div class="container">
+    <div class="section scrollpy">
+      <div class="row">
+	<div class="col s12">
+	  <table class="highlight">
+	    <thead>
+	      <tr>
+		<th>Event name</th>
+		<th>Show Event</th>
+	      </tr>
+	    </thead>
+	    <tbody>
+	      {% for event in events %}
+		<tr>
+		  <td> {{ event['event_name'] }} </td>
+		  <td> <a href="/event/{{ event._id }}">show more</a> </td>
+		</tr>
+	      {% endfor %}
+	    </tbody>
+	  </table>
+	</div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
